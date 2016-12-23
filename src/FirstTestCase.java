@@ -2,28 +2,41 @@ import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.Select;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Scanner;
 
-/**
- * Created by gaston.tulipani on 22/12/2016.
- */
 public class FirstTestCase {
     public static void main(String[] args) {
+        WebDriver driver = initializer();
+
+        WebDriverWait wait = new WebDriverWait(driver, 30);
+
+        login(driver);
+
+        String testProject = "DTVLA Mainline";
+        selectTestProject(driver, wait, testProject);
+
+        String testPlan = "Lilo LHR22 QT v1b1826_0x7722";
+        selectTestPlan(driver, wait, testPlan);
+
+        executeTests(driver, wait);
+    }
+
+    private static WebDriver initializer() {
         System.setProperty("webdriver.chrome.driver","C:\\Program Files (x86)\\Google\\Chrome\\Application\\chromedriver.exe");
         WebDriver driver = new ChromeDriver();
 
-        //Abro TestLink
         String testLink = "http://10.23.144.134/testlink/index.php";
         driver.get(testLink);
+        return driver;
+    }
 
+    private static void login(WebDriver driver) {
         //Detecto campos de Login y los vacío
         WebElement userField = driver.findElement(By.id("login"));
         WebElement passwordField = driver.findElement(By.name("tl_password"));
@@ -41,21 +54,26 @@ public class FirstTestCase {
         userField.sendKeys(user);
         passwordField.sendKeys(password);
         driver.findElement(By.name("login_submit")).click();
+    }
 
+    private static void selectTestProject(WebDriver driver, WebDriverWait wait, String testProject) {
         //Detecto y elijo Test Project
-        WebDriverWait wait = new WebDriverWait(driver, 30);
         wait.until(ExpectedConditions.frameToBeAvailableAndSwitchToIt(By.name("titlebar")));
         wait.until(ExpectedConditions.presenceOfElementLocated(By.name("testproject")));
         Select testProjectSelector = new Select(driver.findElement(By.name("testproject")));
-        testProjectSelector.selectByVisibleText("DTVLA Mainline");
+        testProjectSelector.selectByVisibleText(testProject);
+    }
 
+    private static void selectTestPlan(WebDriver driver, WebDriverWait wait, String testPlan) {
         //Detecto y elijo Test Plan
         driver.switchTo().defaultContent();
         wait.until(ExpectedConditions.frameToBeAvailableAndSwitchToIt(By.name("mainframe")));
         wait.until(ExpectedConditions.presenceOfElementLocated(By.name("testplan")));
         Select testPlanSelector = new Select(driver.findElement(By.name("testplan")));
-        testPlanSelector.selectByVisibleText("Lilo LHR22 QT v1b1826_0x7722");
+        testPlanSelector.selectByVisibleText(testPlan);
+    }
 
+    private static void executeTests(WebDriver driver, WebDriverWait wait) {
         //Elijo la opción Execute Tests
         wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//*[@id='test_execution_topics']/p/a")));
         driver.findElement(By.xpath("//*[@id='test_execution_topics']/p/a")).click();
