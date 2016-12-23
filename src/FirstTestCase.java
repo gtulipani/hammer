@@ -74,6 +74,8 @@ public class FirstTestCase {
     }
 
     private static void executeTests(WebDriver driver, WebDriverWait wait) {
+
+        boolean isGloberHammerTime = true;
         //Elijo la opción Execute Tests
         wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//*[@id='test_execution_topics']/p/a")));
         driver.findElement(By.xpath("//*[@id='test_execution_topics']/p/a")).click();
@@ -111,5 +113,20 @@ public class FirstTestCase {
         wait.until(ExpectedConditions.frameToBeAvailableAndSwitchToIt(By.name("workframe")));
         wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//*[@id='PastResultsRow']/td/a")));
         driver.findElement(By.xpath("//*[@id='PastResultsRow']/td/a")).click();
+
+        wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//*[@id=\"PastResultsDiv\"]/div[1]/table/tbody/tr[2]/td[3]")));
+
+        for(int i=2 ; i<=7 ; i++)
+        {
+            String text = driver.findElement(By.xpath("//*[@id=\"PastResultsDiv\"]/div[1]/table/tbody/tr["+ i +"]/td[3]")).getText();
+            if(text.substring(0,3).equals("glo"))
+                isGloberHammerTime = true;
+            else{
+                isGloberHammerTime = false;
+                break;
+            }
+        }
+
+        System.out.println(isGloberHammerTime);
     }
 }
