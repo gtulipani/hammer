@@ -87,7 +87,7 @@ public class FirstTestCase {
         Select assignedToSelector = new Select(driver.findElement(By.name("filter_assigned_to")));
         assignedToSelector.selectByVisibleText("[Any]");
         Select resultSelector = new Select(driver.findElement(By.name("filter_status")));
-        resultSelector.selectByVisibleText("[Any]");
+        resultSelector.selectByVisibleText("In Progress");
         driver.findElement(By.name("submitOptions")).click();
 
         //Identifico todos los '+' correspondientes a las Test Suites y los clickeo
@@ -114,17 +114,25 @@ public class FirstTestCase {
         wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//*[@id='PastResultsRow']/td/a")));
         driver.findElement(By.xpath("//*[@id='PastResultsRow']/td/a")).click();
 
+        //Parseo los ejecutores para ver si cumplen con el requisito "glo"
         wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//*[@id=\"PastResultsDiv\"]/div[1]/table/tbody/tr[2]/td[3]")));
-
         for(int i=2 ; i<=7 ; i++)
         {
-            String text = driver.findElement(By.xpath("//*[@id=\"PastResultsDiv\"]/div[1]/table/tbody/tr["+ i +"]/td[3]")).getText();
-            if(text.substring(0,3).equals("glo"))
+            String textUser = driver.findElement(By.xpath("//*[@id=\"PastResultsDiv\"]/div[1]/table/tbody/tr["+ i +"]/td[3]")).getText();
+            String testPastResult = driver.findElement(By.xpath("//*[@id=\"PastResultsDiv\"]/div[1]/table/tbody/tr["+ i +"]/td[4]")).getText();
+            if(textUser.substring(0,3).equals("glo") && testPastResult.equals("Passed"))
                 isGloberHammerTime = true;
             else{
                 isGloberHammerTime = false;
                 break;
             }
+        }
+
+        driver.findElement(By.xpath("//*[@name=\"AutoReresh\"]")).click();
+
+        if(isGloberHammerTime == true){
+            driver.findElement(By.xpath("//*[@value=\"p\"]")).click();
+            driver.findElement(By.xpath("//*[@value=\"Save Execution\"]")).click();
         }
 
         System.out.println(isGloberHammerTime);
