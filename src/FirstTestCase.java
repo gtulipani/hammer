@@ -70,8 +70,6 @@ public class FirstTestCase {
         resultSelector.selectByVisibleText("[Any]");
         driver.findElement(By.name("submitOptions")).click();
 
-        //Selecciono un caso de prueba y cambio el estado a In Progress
-
         //Identifico todos los '+' correspondientes a las Test Suites y los clickeo
         List<WebElement> testSuiteLinks = driver.findElements(By.xpath("//*[@class=\"treemenudiv\"]/a[1]"));
         Iterator<WebElement> it = testSuiteLinks.iterator();
@@ -82,15 +80,14 @@ public class FirstTestCase {
             }
         }
 
+        //Identifico todos los TCs que cumplen con los filtros
+        List<WebElement> testCasesList = driver.findElements(By.xpath("//*[@title=\"testcase\"][@class=\"phplm\"]"));
+        Iterator<WebElement> it2 = testCasesList.iterator();
 
-        /*driver.findElement(By.xpath("//*[@id=\"jt1\"]/a[1]")).click();
-        driver.findElement(By.xpath("//*[@id=\"jt2\"]/a[1]")).click();
-        driver.findElement(By.xpath("//*[@id=\"jt3\"]/a[1]")).click();
-        driver.findElement(By.xpath("//*[@id=\"jt4\"]/a[1]")).click();
-        driver.findElement(By.xpath("//*[@id=\"jt5\"]/a[1]")).click();
-        driver.findElement(By.xpath("//*[@id=\"jt6\"]/a[1]")).click();*/
-        wait.until(ExpectedConditions.presenceOfElementLocated((By.xpath("//*[@id=\"jt7\"]/a[2]"))));
-        driver.findElement(By.xpath("//*[@id=\"jt7\"]/a[2]")).click();
+        //Analizo corridas anteriores para un TC en particular
+        WebElement tcPrueba = it2.next();
+
+        tcPrueba.click();
         driver.switchTo().defaultContent();
         driver.switchTo().frame("mainframe");
         wait.until(ExpectedConditions.frameToBeAvailableAndSwitchToIt(By.name("workframe")));
