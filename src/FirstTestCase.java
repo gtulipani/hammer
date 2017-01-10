@@ -1,4 +1,5 @@
 import org.openqa.selenium.By;
+import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
@@ -11,6 +12,16 @@ import java.util.List;
 import java.util.Scanner;
 
 public class FirstTestCase {
+    final static int CORRIDAS_ANTERIORES_INICIO = 2;
+    final static int CORRIDAS_ANTERIORES_CANTIDAD_A_VERIFICAR = 5;
+    final static int CORRIDAS_ANTERIORES_FIN = CORRIDAS_ANTERIORES_INICIO + CORRIDAS_ANTERIORES_CANTIDAD_A_VERIFICAR;
+
+    final static String GLO_EALGARBE = "glo_ealgarbe";
+    final static String ANY = "[Any]";
+    final static String DEFAULT_TESTPLAN = "Lilo LHR22 QT v1b1827_0x7723";
+
+    static boolean AUTO_REFRESH = false;
+
     public static void main(String[] args) {
         WebDriver driver = initializer();
 
@@ -21,8 +32,7 @@ public class FirstTestCase {
         String testProject = "DTVLA Mainline";
         selectTestProject(driver, wait, testProject);
 
-        String testPlan = "Lilo LHR22 QT v1b1826_0x7722";
-        selectTestPlan(driver, wait, testPlan);
+        selectTestPlan(driver, wait);
 
         executeTests(driver, wait);
     }
@@ -64,18 +74,28 @@ public class FirstTestCase {
         testProjectSelector.selectByVisibleText(testProject);
     }
 
-    private static void selectTestPlan(WebDriver driver, WebDriverWait wait, String testPlan) {
+    private static void selectTestPlan(WebDriver driver, WebDriverWait wait) {
         //Detecto y elijo Test Plan
         driver.switchTo().defaultContent();
         wait.until(ExpectedConditions.frameToBeAvailableAndSwitchToIt(By.name("mainframe")));
         wait.until(ExpectedConditions.presenceOfElementLocated(By.name("testplan")));
         Select testPlanSelector = new Select(driver.findElement(By.name("testplan")));
-        testPlanSelector.selectByVisibleText(testPlan);
+
+        //Pregunto testPlan a correr
+        System.out.print("Ingrese el TestPlan a correr. Si no ingresar ninguno o ingresa uno inválido, se cargará uno por defecto: ");
+        String testPlan = new Scanner((System.in)).nextLine();
+
+        if (testPlan.equals(""))
+            testPlan = DEFAULT_TESTPLAN;
+
+        try {
+            testPlanSelector.selectByVisibleText(testPlan);
+        } catch (NoSuchElementException e) {
+            testPlanSelector.selectByVisibleText(DEFAULT_TESTPLAN);
+        }
     }
 
     private static void executeTests(WebDriver driver, WebDriverWait wait) {
-
-        boolean isGloberHammerTime = true;
         //Elijo la opción Execute Tests
         wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//*[@id='test_execution_topics']/p/a")));
         driver.findElement(By.xpath("//*[@id='test_execution_topics']/p/a")).click();
@@ -85,9 +105,23 @@ public class FirstTestCase {
         wait.until(ExpectedConditions.presenceOfElementLocated((By.xpath("//*[@id='filters']/div[1]/div"))));
         driver.findElement(By.xpath("//*[@id='filters']/div[1]/div")).click();
         Select assignedToSelector = new Select(driver.findElement(By.name("filter_assigned_to")));
-        assignedToSelector.selectByVisibleText("[Any]");
+
+        //Pregunto si correr por glo_ealgarbe o asignados a nadie
+        System.out.print("¿Desea buscar casos asignados a glo_ealgarbe (1) o [Any] (2)?: ");
+        String selector;
+        switch (Character.getNumericValue(((new Scanner(System.in)).next().charAt(0))))
+        {
+            case 1:
+                selector = GLO_EALGARBE;
+                break;
+            default:
+                selector = ANY;
+                break;
+        }
+
+        assignedToSelector.selectByVisibleText(selector);
         Select resultSelector = new Select(driver.findElement(By.name("filter_status")));
-        resultSelector.selectByVisibleText("In Progress");
+        resultSelector.selectByVisibleText("Not Run");
         driver.findElement(By.name("submitOptions")).click();
 
         //Identifico todos los '+' correspondientes a las Test Suites y los clickeo
@@ -102,39 +136,77 @@ public class FirstTestCase {
 
         //Identifico todos los TCs que cumplen con los filtros
         List<WebElement> testCasesList = driver.findElements(By.xpath("//*[@title=\"testcase\"][@class=\"phplm\"]"));
+
+        //Ejecuto los casos de prueba
+        executeTCs(driver, wait, testCasesList);
+
+    }
+
+    //Método que se encarga de recorrer la lista de TCs y ejecutar cada uno
+    private static void executeTCs(WebDriver driver, WebDriverWait wait, List<WebElement> testCasesList) {
         Iterator<WebElement> it2 = testCasesList.iterator();
+        while (it2.hasNext()) {
+            driver.switchTo().defaultContent();
+            wait.until(ExpectedConditions.frameToBeAvailableAndSwitchToIt(By.name("mainframe")));
+            wait.until(ExpectedConditions.frameToBeAvailableAndSwitchToIt(By.name("treeframe")));
+            WebElement tc = it2.next();
+            executeTC(driver, wait, tc);
+        }
+    }
 
-        //Analizo corridas anteriores para un TC en particular
-        WebElement tcPrueba = it2.next();
-
-        tcPrueba.click();
+    //Método que se encarga de ejecutar un TC
+    private static void executeTC(WebDriver driver, WebDriverWait wait, WebElement tc) {
+        tc.click();
         driver.switchTo().defaultContent();
-        driver.switchTo().frame("mainframe");
+        wait.until(ExpectedConditions.frameToBeAvailableAndSwitchToIt(By.name("mainframe")));
         wait.until(ExpectedConditions.frameToBeAvailableAndSwitchToIt(By.name("workframe")));
+        if (!AUTO_REFRESH) {
+            driver.findElement(By.xpath("//*[@name=\"AutoReresh\"]")).click();
+            AUTO_REFRESH = true;
+        }
         wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//*[@id='PastResultsRow']/td/a")));
         driver.findElement(By.xpath("//*[@id='PastResultsRow']/td/a")).click();
+        boolean isGloberHammerTime = analizePreviousExecutions(driver, wait);
+        if(isGloberHammerTime){
+            consultarEjecucion(driver);
+        }
+    }
 
-        //Parseo los ejecutores para ver si cumplen con el requisito "glo"
-        wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//*[@id=\"PastResultsDiv\"]/div[1]/table/tbody/tr[2]/td[3]")));
-        for(int i=2 ; i<=7 ; i++)
-        {
-            String textUser = driver.findElement(By.xpath("//*[@id=\"PastResultsDiv\"]/div[1]/table/tbody/tr["+ i +"]/td[3]")).getText();
-            String testPastResult = driver.findElement(By.xpath("//*[@id=\"PastResultsDiv\"]/div[1]/table/tbody/tr["+ i +"]/td[4]")).getText();
-            if(textUser.substring(0,3).equals("glo") && testPastResult.equals("Passed"))
-                isGloberHammerTime = true;
-            else{
-                isGloberHammerTime = false;
-                break;
+    private static void consultarEjecucion(WebDriver driver) {
+        char answer = '\0';
+        while (!respuestaValida(answer)) {
+            System.out.print("Se ha detectado un caso válido para hammerear. ¿Desea martillarlo? [Y/N]?: ");
+            answer = (new Scanner(System.in)).next().charAt(0);
+            if (!respuestaValida(answer)) {
+                System.out.println("La respuesta ha sido incorrecta. Recuerde ingresar 'Y' o 'N'.");
+            }
+            else {
+                if (Character.toUpperCase(answer) == 'Y') {
+                    driver.findElement(By.xpath("//*[@value=\"p\"]")).click();
+                    driver.findElement(By.xpath("//*[@value=\"Save Execution\"]")).click();
+                }
             }
         }
+    }
 
-        driver.findElement(By.xpath("//*[@name=\"AutoReresh\"]")).click();
+    private static boolean respuestaValida(char answer) {
+        return (((Character.toUpperCase(answer) == 'Y') || (Character.toUpperCase(answer) == 'N')));
+    }
 
-        if(isGloberHammerTime == true){
-            driver.findElement(By.xpath("//*[@value=\"p\"]")).click();
-            driver.findElement(By.xpath("//*[@value=\"Save Execution\"]")).click();
+    //Método que se encarga de validar las corridas anteriores
+    private static boolean analizePreviousExecutions(WebDriver driver, WebDriverWait wait) {
+        //Parseo los ejecutores para ver si cumplen con el requisito "glo" y "Passed"
+        wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//*[@id=\"PastResultsDiv\"]/div[1]/table/tbody/tr[2]/td[3]")));
+        int contador = CORRIDAS_ANTERIORES_INICIO;
+        boolean result = true;
+        while ((contador <= CORRIDAS_ANTERIORES_FIN) && (result))
+        {
+            String textUser = driver.findElement(By.xpath("//*[@id=\"PastResultsDiv\"]/div[1]/table/tbody/tr["+ contador +"]/td[3]")).getText();
+            String testPastResult = driver.findElement(By.xpath("//*[@id=\"PastResultsDiv\"]/div[1]/table/tbody/tr["+ contador +"]/td[4]")).getText();
+            if (!(textUser.substring(0,3).equals("glo") && testPastResult.equals("Passed")))
+                result = false;
+            contador++;
         }
-
-        System.out.println(isGloberHammerTime);
+        return result;
     }
 }
