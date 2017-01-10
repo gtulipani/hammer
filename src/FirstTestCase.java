@@ -20,6 +20,9 @@ public class FirstTestCase {
     final static String ANY = "[Any]";
     final static String DEFAULT_TESTPLAN = "Lilo LHR22 QT v1b1827_0x7723";
 
+    final static String NOT_RUN = "Not Run";
+    final static String IN_PROGRESS = "In Progress";
+
     static boolean AUTO_REFRESH = false;
 
     public static void main(String[] args) {
@@ -118,10 +121,23 @@ public class FirstTestCase {
                 selector = ANY;
                 break;
         }
-
         assignedToSelector.selectByVisibleText(selector);
+
         Select resultSelector = new Select(driver.findElement(By.name("filter_status")));
-        resultSelector.selectByVisibleText("Not Run");
+
+        //Pregunto si buscar In Progress o Not Run
+        System.out.print("¿Desea buscar casos Not Run (1) o In Progress (2)?: ");
+        String statusSelector;
+        switch (Character.getNumericValue(((new Scanner(System.in)).next().charAt(0))))
+        {
+            case 1:
+                statusSelector = NOT_RUN;
+                break;
+            default:
+                statusSelector = IN_PROGRESS;
+                break;
+        }
+        resultSelector.selectByVisibleText(statusSelector);
         driver.findElement(By.name("submitOptions")).click();
 
         //Identifico todos los '+' correspondientes a las Test Suites y los clickeo
