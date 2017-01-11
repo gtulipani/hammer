@@ -13,7 +13,7 @@ import java.util.Scanner;
 
 public class FirstTestCase {
     final static int CORRIDAS_ANTERIORES_INICIO = 2;
-    final static int CORRIDAS_ANTERIORES_CANTIDAD_A_VERIFICAR = 5;
+    final static int CORRIDAS_ANTERIORES_CANTIDAD_A_VERIFICAR = 4;
     final static int CORRIDAS_ANTERIORES_FIN = CORRIDAS_ANTERIORES_INICIO + CORRIDAS_ANTERIORES_CANTIDAD_A_VERIFICAR;
 
     final static String GLO_EALGARBE = "glo_ealgarbe";
@@ -22,8 +22,6 @@ public class FirstTestCase {
 
     final static String NOT_RUN = "Not Run";
     final static String IN_PROGRESS = "In Progress";
-
-    static boolean AUTO_REFRESH = false;
 
     public static void main(String[] args) {
         WebDriver driver = initializer();
@@ -176,9 +174,8 @@ public class FirstTestCase {
         driver.switchTo().defaultContent();
         wait.until(ExpectedConditions.frameToBeAvailableAndSwitchToIt(By.name("mainframe")));
         wait.until(ExpectedConditions.frameToBeAvailableAndSwitchToIt(By.name("workframe")));
-        if (!AUTO_REFRESH) {
+        if (driver.findElement(By.xpath("//*[@name=\"AutoReresh\"]")).isSelected()) {
             driver.findElement(By.xpath("//*[@name=\"AutoReresh\"]")).click();
-            AUTO_REFRESH = true;
         }
         wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//*[@id='PastResultsRow']/td/a")));
         driver.findElement(By.xpath("//*[@id='PastResultsRow']/td/a")).click();
