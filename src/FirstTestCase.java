@@ -216,7 +216,7 @@ public class FirstTestCase {
         {
             String textUser = driver.findElement(By.xpath("//*[@id=\"PastResultsDiv\"]/div[1]/table/tbody/tr["+ contador +"]/td[3]")).getText();
             String testPastResult = driver.findElement(By.xpath("//*[@id=\"PastResultsDiv\"]/div[1]/table/tbody/tr["+ contador +"]/td[4]")).getText();
-            if (!(textUser.substring(0,3).equals("glo") && testPastResult.equals("Passed")))
+            if (!(textUser.substring(0,3).equals("glo") && ((testPastResult.equals("Passed")) || (testPastResult.equals("In Progress")))))
                 result = false;
             contador++;
         }
